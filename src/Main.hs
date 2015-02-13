@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Applicative
 import Control.Monad
 import Data.List
 import System.IO
@@ -29,11 +30,7 @@ getRandom iogen (Roll c s) = do
     return $ take c $ randomRs (1, s) gen
 
 roll :: Parser Roll
-roll = do
-    count <- integer
-    char 'd'
-    size <- integer
-    return $ Roll count size
+roll = Roll <$> integer <* char 'd' <*> integer
 
 integer :: Parser Int
 integer = fmap read $ many1 digit
