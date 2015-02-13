@@ -33,6 +33,7 @@ roll = do
     count <- integer
     char 'd'
     size <- integer
-    return $ Roll (read count) (read size)
+    return $ Roll count size
 
-integer = many1 digit
+integer :: Parser Int
+integer = fmap read $ many1 digit
