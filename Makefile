@@ -1,6 +1,6 @@
-all: dice
+all: Main.hs
 
-dice:
+Main.hs:
 	ghc -o dice src/Main.hs
 
 clean:
