@@ -1,36 +1,56 @@
 module Main where
 
-import Control.Applicative
+import Control.Applicative hiding ((<|>))
 import Control.Monad
 import Data.List
 import System.IO
 import System.Random
 import Text.ParserCombinators.Parsec
 
-data Roll = Roll Int Int deriving Show
+data Term = Roll Int Int | Static Int deriving Show
 
 main = forever $ do
+    input <- prompt
+    case (parse expression "error" input) of
+        Left _ -> print "Error"
+        Right ts -> mapM evaluateTerm ts >>= printResults
+
+prompt :: IO String
+prompt = do
     putStr "roll> "
     hFlush stdout
-    input <- getLine
-    case (parse roll "error" input) of
-        Left _ -> print "Error"
-        Right x -> rollDie x
+    getLine
 
-rollDie :: Roll -> IO ()
-rollDie r = do
-    rs <- getRandom newStdGen r
-    putStr $ intercalate " + " (map show rs)
+evaluateTerm :: Term -> IO [Int]
+evaluateTerm (Roll c m) = getRandom c m
+evaluateTerm (Static s) = return [s]
+
+printResults :: [[Int]] -> IO ()
+printResults rss = do
+    putStr $ intercalate " + " $ map show rs
     putStr " = "
-    print $ sum rs
+    print . sum $ rs
+        where rs = concat rss
 
-getRandom :: IO StdGen -> Roll -> IO [Int]
-getRandom iogen (Roll c s) = do
-    gen <- iogen
-    return $ take c $ randomRs (1, s) gen
+getRandom :: Int -> Int -> IO [Int]
+getRandom count magnitude = do
+    g <- newStdGen
+    return $ take count $ randomRs (1, magnitude) g
 
-roll :: Parser Roll
+expression :: Parser [Term]
+expression = sepBy term addition
+
+addition :: Parser (String -> String -> String)
+addition = (++) <$ spaces <* char '+' <* spaces
+
+term :: Parser Term
+term = try roll <|> static
+
+roll :: Parser Term
 roll = Roll <$> integer <* char 'd' <*> integer
+
+static :: Parser Term
+static = Static <$> integer
 
 integer :: Parser Int
 integer = fmap read $ many1 digit
