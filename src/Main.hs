@@ -3,6 +3,7 @@ module Main where
 import Control.Applicative hiding ((<|>))
 import Control.Monad
 import Data.List
+import System.Exit
 import System.IO
 import System.Random
 import Text.ParserCombinators.Parsec
@@ -19,7 +20,10 @@ prompt :: IO String
 prompt = do
     putStr "roll> "
     hFlush stdout
-    getLine
+    eof <- isEOF
+    if eof
+        then putStrLn "" >> exitWith ExitSuccess
+        else getLine
 
 evaluateTerm :: Term -> IO [Int]
 evaluateTerm (Roll c m) = getRandom c m
